@@ -66,7 +66,7 @@
 
       <div class="control-grid">
         <section class="control-panel"><div class="control-header"><div><h2>수동 캡처</h2><p>현재 표시된 화면을 즉시 기록합니다.</p></div><span class="mode-icon">⌖</span></div><button id="captureNow" type="button" class="btn primary full big" disabled>현재 화면 PNG 저장 <span aria-hidden="true">↗</span></button><button id="captureDelayed" type="button" class="btn secondary full manual-delay" disabled>5초 후 촬영 (전체 화면용)</button><p class="fineprint">전체 화면 공유 시 지연 촬영을 누르고 Vivado/Vitis 창으로 돌아가세요. 선택 영역이 있으면 해당 영역만 저장합니다.</p></section>
-        <section class="control-panel"><div class="control-header"><div><h2>자동 캡처</h2><p>화면 변화가 멈추면 기록합니다.</p></div><span class="mode-icon">◷</span></div><div class="auto-options"><label>최소 저장 간격 <select id="interval"><option value="4000" selected>4초</option><option value="6000">6초</option><option value="10000">10초</option></select></label><label>변화 감도 <select id="sensitivity"><option value="0.006">높음</option><option value="0.012" selected>보통</option><option value="0.024">낮음</option></select></label></div><button id="toggleAuto" type="button" class="btn dark full big" disabled>자동 캡처 시작</button><p class="fineprint">전역 클릭 감지 대신 화면 변화 감지 · 약 1초 안정화 후 저장</p></section>
+        <section class="control-panel"><div class="control-header"><div><h2>자동 캡처</h2><p>화면 변화 또는 정해진 주기에 맞춰 기록합니다.</p></div><span class="mode-icon">◷</span></div><div class="auto-options"><label>촬영 방식 <select id="captureMode"><option value="change" selected>화면 변화 감지</option><option value="periodic">일정 주기</option><option value="hybrid">변화 + 일정 주기</option></select></label><label>촬영 간격 <select id="interval"><option value="4000">4초</option><option value="6000">6초</option><option value="10000">10초</option><option value="30000" selected>30초</option><option value="60000">1분</option><option value="300000">5분</option></select></label><label>변화 감도 <select id="sensitivity"><option value="0.006">높음</option><option value="0.012" selected>보통</option><option value="0.024">낮음</option></select></label><label>화면 안정화 <select id="settleTime"><option value="650">0.65초</option><option value="1200" selected>1.2초</option><option value="2000">2초</option><option value="3000">3초</option></select></label></div><button id="toggleAuto" type="button" class="btn dark full big" disabled>자동 캡처 시작</button><p id="autoStatus" class="fineprint" role="status">전역 클릭은 감지하지 않습니다. 화면의 변화가 멈춘 뒤 저장합니다.</p></section>
       </div>
 
       <section class="history-panel"><div class="panel-head"><div><h2>캡처 기록</h2><p>이번 브라우저 세션에서 저장된 항목입니다. 파일 원본은 로컬 폴더에 남습니다.</p></div><button id="clearHistory" type="button" class="btn small ghost">목록 비우기</button></div><div id="historyEmpty" class="history-empty">저장된 캡처가 없습니다. 첫 번째 화면을 기록해보세요.</div><div id="historyList" class="history-list" aria-live="polite"></div></section>
@@ -88,7 +88,7 @@
     previewVideo: $('previewVideo'), viewerFrame: $('viewerFrame'), resolution: $('resolution'),
     surfaceLabel: $('surfaceLabel'), liveChip: $('liveChip'), cropLayer: $('cropLayer'),
     cropBox: $('cropBox'), cropHelp: $('cropHelp'), selectCrop: $('selectCrop'), clearCrop: $('clearCrop'),
-    captureNow: $('captureNow'), captureDelayed: $('captureDelayed'), toggleAuto: $('toggleAuto'), interval: $('interval'),
+    captureNow: $('captureNow'), captureDelayed: $('captureDelayed'), toggleAuto: $('toggleAuto'), captureMode: $('captureMode'), settleTime: $('settleTime'), autoStatus: $('autoStatus'), interval: $('interval'),
     sensitivity: $('sensitivity'), savedCount: $('savedCount'), historyEmpty: $('historyEmpty'),
     historyList: $('historyList'), clearHistory: $('clearHistory'), toast: $('toast')
   };
@@ -106,6 +106,8 @@
   let saving = false;
   let autoOn = false;
   let autoTimer = null;
+  let autoBusy = false;
+  let lastPeriodicSave = 0;
   let delayedTimer = null;
   let savedCount = 0;
   let lastSave = 0;
@@ -370,6 +372,7 @@
   }
   function stopAuto() {
     autoOn = false;
+    els.autoStatus.textContent = '자동 캡처 중지됨';
     changed = false;
     stableSince = 0;
     clearInterval(autoTimer);
@@ -381,49 +384,65 @@
     if (!(await canWrite(true))) return;
     if (!mediaStream || !fingerprint()) return toast('먼저 화면을 공유하세요.', true);
     autoOn = true;
+    lastPeriodicSave = performance.now();
     baseline = fingerprint();
     previousSample = baseline;
     changed = false;
     stableSince = 0;
     state('자동 캡처 실행', 'success');
     autoTimer = setInterval(autoTick, 650);
-    toast('자동 캡처 시작: 화면 변화가 안정된 후 저장합니다.');
+    els.autoStatus.textContent = '자동 촬영 실행 중 · 원본 PNG + CSV 로컬 저장';
+    toast('자동 캡처 시작: 설정한 방식으로 로컬 폴더에 저장합니다.');
     refreshUI();
   }
   async function autoTick() {
-    if (!autoOn || saving) return;
+    // Prevent overlapping timer callbacks during PNG and CSV writes.
+    if (!autoOn || saving || autoBusy) return;
+    autoBusy = true;
     try {
       const now = performance.now();
       const frame = fingerprint();
       if (!frame) return;
-      const threshold = Number(els.sensitivity.value);
-      const changedFromBaseline = difference(frame, baseline);
-      if (changedFromBaseline < threshold) {
-        changed = false;
-        stableSince = 0;
-        previousSample = frame;
-        return;
-      }
-      if (!changed || difference(frame, previousSample) > 0.0018) {
-        changed = true;
-        stableSince = now;
-      }
-      previousSample = frame;
-      if (changed && now - stableSince >= 1200 && now - lastSave >= Number(els.interval.value)) {
-        const success = await saveCapture('auto_change', false);
-        if (success) {
-          baseline = fingerprint();
-          previousSample = baseline;
+      const mode = els.captureMode.value;
+      const gap = Number(els.interval.value);
+      const elapsed = now - lastSave;
+      const periodicDue = (mode === 'periodic' || mode === 'hybrid') &&
+        now - lastPeriodicSave >= gap;
+      let changeDue = false;
+      if (mode !== 'periodic') {
+        if (difference(frame, baseline) < Number(els.sensitivity.value)) {
           changed = false;
           stableSince = 0;
-        } else if (autoOn) stopAuto();
+        } else {
+          if (!changed || difference(frame, previousSample) > 0.0018) {
+            changed = true;
+            stableSince = now;
+          }
+          if (changed && now - stableSince >= Number(els.settleTime.value) &&
+              elapsed >= gap) changeDue = true;
+        }
       }
+      previousSample = frame;
+      if (!periodicDue && !changeDue) return;
+      // Periodic captures are recorded even when frame pixels are identical.
+      const reason = periodicDue ? 'auto_periodic' : 'auto_change';
+      const success = await saveCapture(reason, false);
+      if (success) {
+        lastPeriodicSave = performance.now();
+        baseline = fingerprint();
+        previousSample = baseline;
+        changed = false;
+        stableSince = 0;
+        els.autoStatus.textContent = '최근 자동 촬영: ' + new Date().toLocaleTimeString('ko-KR') +
+          (reason === 'auto_periodic' ? ' · 정기 촬영' : ' · 변화 감지');
+      } else if (autoOn) stopAuto();
     } catch (error) {
       stopAuto();
-      toast(`자동 촬영 오류: ${error.message}`, true);
+      toast('자동 촬영 오류: ' + error.message, true);
+    } finally {
+      autoBusy = false;
     }
   }
-
   async function writePng(chapter, step, name, blob) {
     const chFolder = await rootHandle.getDirectoryHandle(`ch${pad2(chapter)}`, { create: true });
     const stepFolder = await chFolder.getDirectoryHandle(`step${pad2(step)}`, { create: true });
@@ -591,6 +610,24 @@
     refreshUI();
   });
   els.toggleAuto.addEventListener('click', () => autoOn ? stopAuto() : startAuto());
+  const captureSettings = ['captureMode', 'interval', 'sensitivity', 'settleTime'];
+  captureSettings.forEach((key) => {
+    try {
+      const saved = localStorage.getItem('soc-capture-setting-' + key);
+      if (saved && Array.from(els[key].options).some(option => option.value === saved)) els[key].value = saved;
+    } catch (error) { console.warn('자동 촬영 설정 복원 실패:', error); }
+    els[key].addEventListener('change', () => {
+      try { localStorage.setItem('soc-capture-setting-' + key, els[key].value); }
+      catch (error) { console.warn('자동 촬영 설정 저장 실패:', error); }
+      if (autoOn) {
+        baseline = fingerprint();
+        previousSample = baseline;
+        changed = false;
+        stableSince = 0;
+        lastPeriodicSave = performance.now();
+      }
+    });
+  });
   els.selectCrop.addEventListener('click', () => {
     if (!cropActive && crop) { clearCrop(); els.cropLayer.style.pointerEvents = ''; }
     toggleCrop(!cropActive);
