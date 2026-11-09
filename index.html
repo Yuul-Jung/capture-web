@@ -12,44 +12,39 @@
 @media(max-width:1050px){.workspace{grid-template-columns:265px minmax(0,1fr)}.sidebar{padding:23px 17px}.control-grid{grid-template-columns:1fr}.page-intro h1{font-size:23px}}@media(max-width:760px){.workspace{display:block}.sidebar{min-height:unset;border-right:0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:0 18px;padding:15px 19px}.sidebar-title{grid-column:1/-1}.setting-group{padding:17px 0}.setting-group:last-of-type{grid-column:1/-1}.sidebar-foot{display:none}.mainarea{padding:23px 15px}.topbar{padding:13px 15px}.top-right{gap:6px}.privacy{display:none}.page-intro{align-items:start}.count-block{padding:10px 12px}.control-grid{grid-template-columns:1fr 1fr}.control-panel{padding:17px}.viewer-toolbar{flex-wrap:wrap}}@media(max-width:540px){.sidebar{display:block}.page-intro{display:block}.count-block{margin-top:14px;display:inline-flex}.control-grid{grid-template-columns:1fr}.panel-head{padding:15px}.viewer-toolbar{padding:12px 14px}.history-item{grid-template-columns:50px minmax(0,1fr);gap:8px}.history-item img{width:50px;height:35px}.history-item .status{display:none}}
 
 
-/* Compact desktop layout: keep capture controls and lower settings visible without changing capture resolution. */
+/* Balanced desktop layout: original 16:9 preview, compact whitespace only. */
 @media (min-width:1060px) and (min-height:650px){
-  .topbar{min-height:49px;padding:6px 20px}
-  .brand{font-size:16px;gap:9px}.brand-mark{height:31px;width:31px;border-radius:7px}
-  .workspace{grid-template-columns:248px minmax(0,1fr);max-width:1500px}
-  .sidebar{min-height:calc(100vh - 49px);padding:12px 14px}
-  .sidebar-title{padding-bottom:8px}
-  .setting-group{padding:10px 0}.setting-group h2{font-size:13px;margin-bottom:6px;gap:6px}
-  .step-badge{height:19px;width:19px;font-size:10px}
-  .hint{font-size:10.5px;line-height:1.35;margin-bottom:7px}
-  .info-pill{padding:6px 8px;margin-top:5px;font-size:10px}
-  .field-row{gap:7px}.field-row input{height:29px;padding:0 7px;margin-top:3px}
-  .path-preview{padding:6px;margin:6px 0;font-size:10px}
-  .btn{padding:7px 10px;font-size:12px;gap:5px;border-radius:6px}
-  .btn.big{padding:9px 12px;font-size:12px}.btn.small{padding:5px 8px;font-size:11px}
-  .setting-group .btn + .btn{margin-top:5px}
-  .sidebar-foot{padding:8px;margin-top:10px}.sidebar-foot p{line-height:1.4;margin-top:4px;font-size:10px}
-  .mainarea{padding:12px 17px 16px}
-  .page-intro{margin-bottom:9px;gap:8px}.eyebrow{margin-bottom:2px}
-  .page-intro h1{font-size:20px;margin-bottom:3px}
-  .page-intro p:not(.eyebrow){font-size:11px}
-  .count-block{padding:7px 10px}.count-block strong{font-size:20px}
-  .panel-head{padding:9px 13px}.panel-head h2{font-size:13px;margin-bottom:2px}
-  .panel-head p{font-size:10px}.live-chip{padding:5px 8px}
-  .viewer-frame{aspect-ratio:auto;height:clamp(155px,25vh,260px)}
-  .preview-illustration{height:85px}.mini-window{transform:scale(.7)}
-  .viewer-toolbar{padding:6px 12px}
-  .control-grid{margin-top:8px;gap:8px}
-  .control-panel{padding:9px 12px}
-  .control-header{margin-bottom:8px}.control-header h2{font-size:13px;margin-bottom:2px}
-  .control-header p{font-size:10px}.mode-icon{font-size:17px}
-  .auto-options{gap:6px;margin-bottom:7px}.auto-options select{height:29px;margin-top:3px}
-  .manual-delay{margin-top:5px}.fineprint{margin-top:5px;line-height:1.35;font-size:10px}
-  .history-panel{margin-top:8px}.history-empty{padding:10px}
-  .history-list{max-height:100px;padding:0 12px 6px}
-  .history-item{padding:5px 0}
-  .bottom-note{padding:7px 3px;font-size:10px;line-height:1.35}
+  .topbar{min-height:52px;padding:7px 20px}
+  .brand{font-size:16px;gap:9px}.brand-mark{height:32px;width:32px}
+  .workspace{grid-template-columns:260px minmax(0,1fr);max-width:1500px}
+  .sidebar{min-height:calc(100vh - 52px);padding:13px 16px}
+  .sidebar-title{padding-bottom:9px}
+  .setting-group{padding:12px 0}.setting-group h2{font-size:13px;margin-bottom:7px}
+  .step-badge{height:21px;width:21px;font-size:11px}
+  .hint{font-size:11px;line-height:1.45;margin-bottom:8px}
+  .info-pill{padding:7px 9px;margin-top:6px;font-size:10.5px}
+  .field-row input{height:33px;padding:0 8px;margin-top:4px}
+  .path-preview{padding:7px;margin:7px 0}
+  .btn{padding:8px 11px;font-size:12px;gap:6px}
+  .btn.big{padding:11px 13px;font-size:13px}.btn.small{padding:6px 9px;font-size:11px}
+  .setting-group .btn + .btn{margin-top:6px}
+  .sidebar-foot{padding:10px;margin-top:12px}.sidebar-foot p{line-height:1.5;margin-top:5px}
+  .mainarea{padding:12px 18px 18px}
+  .page-intro{display:none}
+  .panel-head{padding:11px 15px}.panel-head h2{font-size:14px;margin-bottom:3px}
+  .panel-head p{font-size:11px}
+  .viewer-frame{aspect-ratio:16/9;height:auto}
+  .viewer-toolbar{padding:8px 14px}
+  .control-grid{margin-top:10px;gap:10px}
+  .control-panel{padding:12px 14px}
+  .control-header{margin-bottom:10px}.control-header h2{font-size:14px;margin-bottom:3px}
+  .auto-options{gap:8px;margin-bottom:9px}.auto-options select{height:33px;margin-top:4px}
+  .manual-delay{margin-top:6px}.fineprint{margin-top:7px;line-height:1.45}
+  .history-panel{margin-top:10px}.history-empty{padding:13px}
+  .history-list{max-height:140px}
+  .bottom-note{padding:9px 4px;line-height:1.5}
 }
+
 
 </style>
   
