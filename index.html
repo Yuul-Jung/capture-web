@@ -46,6 +46,27 @@
 }
 
 
+
+/* Stable capture workspace: dynamic statuses and history do not reflow controls. */
+@media (min-width:1060px) and (min-height:650px){
+  .panel-head{min-height:60px}
+  .panel-head>div:first-child{min-width:0;flex:1}
+  .panel-head p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .viewer-toolbar{min-height:45px}
+  .viewer-toolbar>span{min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tool-actions{flex-shrink:0}
+  .control-grid{align-items:stretch}
+  .control-panel{min-width:0}
+  .control-header{min-height:37px}
+  .fineprint{min-height:28px;max-height:42px;overflow:auto}
+  .history-panel{min-height:92px}
+  .history-list{height:140px;max-height:140px;overflow-y:auto}
+  .history-empty{min-height:44px}
+  .info-pill{min-height:29px;max-height:54px;overflow:auto}
+  .path-preview{min-height:29px}
+  .state{display:inline-block;min-width:82px;text-align:center;white-space:nowrap}
+}
+
 </style>
   
 </head>
