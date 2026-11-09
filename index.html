@@ -68,38 +68,44 @@
 }
 
 
-/* Prevent tall or portrait shared video from expanding the 16:9 preview. */
+/* Hard layout lock: padding establishes 16:9 box independent of video metadata. */
 .viewer-frame{
+  display:block !important;
+  position:relative !important;
+  box-sizing:border-box;
   width:100%;
-  aspect-ratio:16 / 9;
-  height:auto;
-  min-height:0;
+  height:0 !important;
+  min-height:0 !important;
   max-height:none;
-  display:block;
-  position:relative;
+  padding:0 0 56.25% !important;
+  aspect-ratio:auto !important;
   overflow:hidden;
-  contain:layout;
+  background:#141e30;
 }
-.viewer-frame video{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  min-width:0;
-  min-height:0;
-  max-width:100%;
-  max-height:100%;
-  object-fit:contain;
+.viewer-frame video,
+.viewer-frame .empty-preview,
+.viewer-frame .crop-layer{
+  position:absolute !important;
+  inset:0 !important;
+  box-sizing:border-box;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  margin:0 !important;
 }
+.viewer-frame video{object-fit:contain !important}
 .viewer-frame .empty-preview{
-  position:absolute;
-  inset:0;
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
 }
-.viewer-frame .crop-layer{position:absolute;inset:0}
+.viewer-frame.playing .empty-preview{display:none}
+.viewer-frame .crop-layer{display:none}
+.viewer-frame .crop-layer.active{display:block}
 
 </style>
   
