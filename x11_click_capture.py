@@ -4,7 +4,6 @@ import argparse
 import csv
 import hashlib
 import os
-import queue
 import threading
 import time
 from datetime import datetime
@@ -24,6 +23,10 @@ def main():
     parser.add_argument("--delay", type=float, default=0.7, help="Seconds after last click/release")
     parser.add_argument("--interval", type=float, default=30, help="Periodic backup seconds; 0 disables")
     parser.add_argument("--monitor", type=int, default=1, help="mss monitor index; 0 means all")
+    parser.add_argument("--region", nargs=4, type=int, metavar=("X", "Y", "WIDTH", "HEIGHT"),
+                        help="Capture only this absolute desktop rectangle")
+    parser.add_argument("--select-region", action="store_true",
+                        help="Choose two opposite corners with mouse clicks before capture starts")
     args = parser.parse_args()
     if os.environ.get("XDG_SESSION_TYPE", "").lower() != "x11":
         parser.error("This tool requires an X11 session.")
@@ -35,12 +38,52 @@ def main():
     root = Path(args.output).expanduser().resolve()
     raw = root / f"ch{args.chapter:02d}" / f"step{args.step:02d}" / "raw"
     raw.mkdir(parents=True, exist_ok=True)
-    pending = queue.Queue()
     held = set()
     lock = threading.Lock()
     due_at = None
     last_capture = time.monotonic()
     stop = threading.Event()
+    region = None
+
+    if args.region and args.select_region:
+        parser.error("Use either --region or --select-region")
+    if args.region:
+        x, y, width, height = args.region
+        if width <= 0 or height <= 0:
+            parser.error("Region width and height must be positive")
+        region = {"left": x, "top": y, "width": width, "height": height}
+
+    if args.select_region:
+        corners = []
+        print("Select region: click the first corner, then the opposite corner.", flush=True)
+        def select_corner(x, y, button, pressed):
+            if pressed and button == mouse.Button.left:
+                corners.append((int(x), int(y)))
+                print(f"Corner {len(corners)}: {corners[-1]}", flush=True)
+                if len(corners) >= 2:
+                    return False
+        with mouse.Listener(on_click=select_corner) as selector:
+            selector.join()
+        if len(corners) != 2:
+            parser.error("Region selection was interrupted")
+        x1, y1 = corners[0]
+        x2, y2 = corners[1]
+        region = {"left": min(x1, x2), "top": min(y1, y2),
+                  "width": abs(x2 - x1), "height": abs(y2 - y1)}
+        if region["width"] < 4 or region["height"] < 4:
+            parser.error("Selected region is too small")
+        print(f"Region selected: {region}", flush=True)
+
+    with mss() as sct:
+        if args.monitor < 0 or args.monitor >= len(sct.monitors):
+            parser.error(f"Monitor index must be 0..{len(sct.monitors)-1}")
+        desktop = sct.monitors[0]
+        if region:
+            if (region["left"] < desktop["left"] or
+                region["top"] < desktop["top"] or
+                region["left"] + region["width"] > desktop["left"] + desktop["width"] or
+                region["top"] + region["height"] > desktop["top"] + desktop["height"]):
+                parser.error("Selected region must fit inside the desktop bounds")
 
     def on_click(x, y, button, pressed):
         nonlocal due_at
@@ -60,9 +103,13 @@ def main():
                     f"{now:%Y%m%d_%H%M%S_%f}_{reason}.png")
         dest = raw / filename
         with mss() as sct:
-            if args.monitor >= len(sct.monitors):
-                raise ValueError(f"Monitor {args.monitor} unavailable; valid 0..{len(sct.monitors)-1}")
-            sct.shot(mon=args.monitor, output=str(dest))
+            if region:
+                # mss supports a desktop-relative rectangle, including multi-monitor layouts.
+                from mss.tools import to_png
+                shot = sct.grab(region)
+                to_png(shot.rgb, shot.size, output=str(dest))
+            else:
+                sct.shot(mon=args.monitor, output=str(dest))
         digest = hashlib.sha256(dest.read_bytes()).hexdigest()
         relative = dest.relative_to(root).as_posix()
         csv_path = root / "captures_x11.csv"
@@ -72,7 +119,7 @@ def main():
             if new_file:
                 writer.writerow(CSV_FIELDS)
             writer.writerow([now.isoformat(), args.chapter, args.step,
-                             reason, "x11_monitor", relative, digest, "UNREVIEWED"])
+                             reason, "x11_region" if region else "x11_monitor", relative, digest, "UNREVIEWED"])
         last_capture = time.monotonic()
         print(f"Saved {relative}", flush=True)
 
