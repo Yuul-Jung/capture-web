@@ -45,3 +45,28 @@ GitHub 저장소에 `index.html`과 `.nojekyll`이 있으므로 별도 빌드 �
 - `README.md`: 사용법
 
 기존 SoC 실습 교재 저장소 `Yuul-Jung/soc`와 독립적으로 유지합니다.
+
+## 5. Ubuntu X11 전역 마우스 클릭 촬영 (별도 실행 도구)
+
+`x11_click_capture.py`는 웹앱과 독립 실행되는 로컬 보조 프로그램입니다. X11 전역 마우스 버튼 놓기 이벤트 후 기본 0.7초 동안 추가 클릭이 없으면 전체 모니터를 PNG로 저장하고, 30초마다 보조 촬영합니다. 브라우저의 화면 공유나 저장 폴더 권한은 필요하지 않습니다.
+
+```bash
+# X11 여부 확인
+echo "$XDG_SESSION_TYPE"
+
+# 프로젝트 다운로드
+git clone https://github.com/Yuul-Jung/capture-web.git
+cd capture-web
+git switch feature/capture-autosave-v2
+
+# 독립 Python 환경 생성 및 X11 마우스 감지/스크린샷 라이브러리 설치
+python3 -m venv .venv
+.venv/bin/pip install pynput mss
+
+# 전역 클릭 감지 및 캡처 실행
+.venv/bin/python x11_click_capture.py --chapter 1 --step 1 --delay 0.7 --interval 30
+```
+
+기본 저장 위치는 `~/soc/evidence/ch01/step01/raw/`이며 이력은 별도 `captures_x11.csv`에 기록됩니다. 웹앱의 `captures.csv`와 스키마가 다르므로 혼합하지 않습니다. 중지하려면 터미널에서 Ctrl+C를 누릅니다.
+
+**주의:** 전역 클릭이므로 캡처 앱 자체 클릭도 감지하며, 화면에 표시된 개인정보나 토큰이 촬영될 수 있습니다. 캡처 제외 창 설정과 웹앱 통합은 아직 구현하지 않았습니다. 이 도구는 X11 로컬 실행용이며 GitHub Pages에서 직접 실행되지 않습니다.
