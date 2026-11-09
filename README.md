@@ -67,7 +67,7 @@ python3 -m venv .venv
 .venv/bin/python x11_click_capture.py --chapter 1 --step 1 --delay 0.7 --interval 30
 ```
 
-기본 저장 위치는 `~/soc/evidence/ch01/step01/raw/`이며 이력은 별도 `captures_x11.csv`에 기록됩니다. 웹앱의 `captures.csv`와 스키마가 다르므로 혼합하지 않습니다. 중지하려면 터미널에서 Ctrl+C를 누릅니다.
+기본 저장 위치는 `~/soc/evidence/ch01/`이며 이력은 별도 `captures_x11.csv`에 기록됩니다. 웹앱의 `captures.csv`와 스키마가 다르므로 혼합하지 않습니다. 중지하려면 터미널에서 Ctrl+C를 누릅니다.
 
 **주의:** 전역 클릭이므로 캡처 앱 자체 클릭도 감지하며, 화면에 표시된 개인정보나 토큰이 촬영될 수 있습니다. 캡처 제외 창 설정과 웹앱 통합은 아직 구현하지 않았습니다. 이 도구는 X11 로컬 실행용이며 GitHub Pages에서 직접 실행되지 않습니다.
 
