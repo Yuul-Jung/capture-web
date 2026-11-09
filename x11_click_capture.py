@@ -36,7 +36,7 @@ def main():
         parser.error("delay and interval must be non-negative")
 
     root = Path(args.output).expanduser().resolve()
-    raw = root / f"ch{args.chapter:02d}" / f"step{args.step:02d}" / "raw"
+    raw = root / f"ch{args.chapter:02d}"
     raw.mkdir(parents=True, exist_ok=True)
     held = set()
     lock = threading.Lock()
