@@ -71,7 +71,7 @@
           <label>챕터 <input id="chapter" type="number" min="1" max="99" value="1" inputmode="numeric"></label>
           <label>STEP <input id="step" type="number" min="1" max="999" value="1" inputmode="numeric"></label>
         </div>
-        <div id="pathPreview" class="path-preview">ch01 / step01 / raw /</div>
+        <div id="pathPreview" class="path-preview">ch01 /</div>
         <button id="nextStep" type="button" class="btn ghost full">다음 STEP <span aria-hidden="true">→</span></button>
       </section>
       <section class="setting-group">
@@ -175,7 +175,7 @@
     els.appState.className = `state ${style}`;
   }
   function updatePath() {
-    els.pathPreview.textContent = `ch${pad2(getChapter())} / step${pad2(getStep())} / raw /`;
+    els.pathPreview.textContent = `ch${pad2(getChapter())} /`;
     localStorage.setItem('soc-capture-chapter', String(getChapter()));
     localStorage.setItem('soc-capture-step', String(getStep()));
   }
@@ -504,9 +504,7 @@
   }
   async function writePng(chapter, step, name, blob) {
     const chFolder = await rootHandle.getDirectoryHandle(`ch${pad2(chapter)}`, { create: true });
-    const stepFolder = await chFolder.getDirectoryHandle(`step${pad2(step)}`, { create: true });
-    const rawFolder = await stepFolder.getDirectoryHandle('raw', { create: true });
-    const file = await rawFolder.getFileHandle(name, { create: true });
+    const file = await chFolder.getFileHandle(name, { create: true });
     const writer = await file.createWritable();
     try { await writer.write(blob); await writer.close(); }
     catch (error) { try { await writer.abort(); } catch (_) { /* ignore */ } throw error; }
@@ -584,7 +582,7 @@
       pngName = `ch${pad2(chapter)}_step${pad2(step)}_${localDateName(date)}_${reason}_${unique}.png`;
       await writePng(chapter, step, pngName, blob);
       createdPng = true;
-      const relativePath = `ch${pad2(chapter)}/step${pad2(step)}/raw/${pngName}`;
+      const relativePath = `ch${pad2(chapter)}/${pngName}`;
       const track = mediaStream.getVideoTracks()[0];
       const displaySurface = track?.getSettings().displaySurface || 'unknown';
       const mode = crop ? `web_${displaySurface}_region` : `web_${displaySurface}`;
@@ -654,7 +652,7 @@
   els.nextStep.addEventListener('click', () => {
     els.step.value = Math.min(999, getStep() + 1);
     updatePath();
-    toast(`STEP ${pad2(getStep())} 폴더로 이동합니다. (검증 완료 판정과 무관)`);
+    toast(`STEP ${pad2(getStep())} 번호를 적용합니다. (검증 완료 판정과 무관)`);
   });
   els.captureNow.addEventListener('click', () => saveCapture('manual'));
   els.captureDelayed.addEventListener('click', async () => {
