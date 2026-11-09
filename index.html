@@ -404,7 +404,7 @@
       if (!els.previewVideo.videoWidth) {
         await new Promise((resolve) => els.previewVideo.addEventListener('loadedmetadata', resolve, { once: true }));
       }
-      els.viewerFrame.style.aspectRatio = `${els.previewVideo.videoWidth} / ${els.previewVideo.videoHeight}`;
+      // Keep the preview layout fixed; shared source aspect ratio must not resize it.
       els.viewerFrame.classList.add('playing');
       const info = track.getSettings();
       const sourceLabel = { monitor: '전체 화면', window: '공유 창', browser: '브라우저 탭' }[info.displaySurface] || '사용자 선택 화면';
